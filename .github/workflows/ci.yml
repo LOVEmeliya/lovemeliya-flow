@@ -1,0 +1,41 @@
+name: macOS CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: macos-15
+    timeout-minutes: 30
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+      HOMEBREW_NO_AUTO_UPDATE: "1"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Check Swift toolchain
+        run: swift --version
+      - name: Install FFmpeg
+        run: brew list ffmpeg >/dev/null 2>&1 || brew install ffmpeg
+      - name: Build all executables
+        run: swift build
+      - name: Test software conversion and service behavior
+        # Hosted macOS VMs may not expose VideoToolbox hardware encoders.
+        run: swift test --skip IntegrationTests.testHardwareEncodingOnThisMac
+      - name: Test MCP over stdio
+        run: python3 scripts/test-mcp.py
+      - name: Build and verify application bundle
+        run: ./scripts/build-app.sh
+      - name: Verify release packaging
+        run: ./scripts/package-release.sh

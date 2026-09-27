@@ -1,0 +1,14 @@
+.build/
+dist/
+.DS_Store
+.test-artifacts/
+.swiftpm/
+.env
+.env.*
+!.env.example
+*.xcuserstate
+xcuserdata/
+__pycache__/
+*.pyc
+*.log
+*.dSYM/
